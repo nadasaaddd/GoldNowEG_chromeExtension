@@ -1,150 +1,185 @@
+// ================= CONSTANTS =================
+const GOLD_API_KEY = "goldapi-13qujjslsmkk93b0k-io";
 const GOLD_OUNCE_GRAMS = 31.1034768;
-const REFRESH_INTERVAL = 600000;
+const REFRESH_INTERVAL = 10 * 60 * 1000; // 10 minutes
+const MARKET_ADJUSTMENT = 1.02; // 2% local market factor
 
+// ================= TRANSLATIONS =================
 const translations = {
-    en: {
-        title: "Egypt Gold Tracker",
-        k24: "24K Pure Gold",
-        k21: "21K Standard",
-        k18: "18K Jewelry",
-        coin: "Gold Coin (8g)",
-        ounce: "Global Ounce",
-        rate: "USD/EGP Bank",
-        live: "Live Market",
-        unit: "EGP / g",
-        currency: "EGP",
-        footer: "Prices updated every 10 minutes based on official global parity.",
-        toggle: "AR"
+  en: {
+    title: "Egypt Gold Tracker",
+    k24: "24K Pure Gold",
+    k21: "21K Standard",
+    k18: "18K Jewelry",
+    coin: "Gold Coin (8g)",
+    ounce: "Global Ounce",
+    rate: "USD/EGP Bank",
+    live: "Live Market",
+    unit: "EGP / g",
+    currency: "EGP",
+    footer: "Prices updated every 10 minutes based on global gold price.",
+    toggle: "AR",
+  },
+  ar: {
+    title: "أسعار الذهب في مصر",
+    k24: "عيار ٢٤ (نقي)",
+    k21: "عيار ٢١ (الأكثر تداولاً)",
+    k18: "عيار ١٨ (مشغولات)",
+    coin: "جنيه ذهب (٨ جرام)",
+    ounce: "الأونصة عالمياً",
+    rate: "سعر الدولار",
+    live: "سعر مباشر",
+    unit: "ج.م / جرام",
+    currency: "ج.م",
+    footer: "يتم تحديث الأسعار كل ١٠ دقائق حسب السعر العالمي.",
+    toggle: "EN",
+  },
+};
+
+// ================= STATE =================
+let currentLang = "en";
+let currentTheme = "light";
+
+// ================= DOM =================
+const el = {
+  p24: document.getElementById("p24"),
+  p21: document.getElementById("p21"),
+  p18: document.getElementById("p18"),
+  pCoin: document.getElementById("pCoin"),
+  ounceUSD: document.getElementById("ounceUSD"),
+  egpRate: document.getElementById("egpRate"),
+  timestamp: document.getElementById("timestamp"),
+  langToggle: document.getElementById("langToggle"),
+  themeToggle: document.getElementById("themeToggle"),
+  sunIcon: document.getElementById("sunIcon"),
+  moonIcon: document.getElementById("moonIcon"),
+  mainTitle: document.getElementById("mainTitle"),
+  updateText: document.getElementById("updateText"),
+  refreshBtn: document.getElementById("refreshBtn"),
+  footerText: document.getElementById("footerText"),
+};
+
+// ================= API =================
+async function fetchGoldOunceUSD() {
+  const res = await fetch("https://www.goldapi.io/api/XAU/USD", {
+    headers: {
+      "x-access-token": GOLD_API_KEY,
+      "Content-Type": "application/json",
     },
-    ar: {
-        title: "أسعار الذهب في مصر",
-        k24: "عيار ٢٤ (نقي)",
-        k21: "عيار ٢١ (الأكثر طلباً)",
-        k18: "عيار ١٨ (مشغولات)",
-        coin: "جنيه ذهب (٨ جرام)",
-        ounce: "الأونصة عالمياً",
-        rate: "سعر الصرف البنكي",
-        live: "سعر مباشر",
-        unit: "ج.م / جرام",
-        currency: "ج.م",
-        footer: "يتم تحديث الأسعار كل ١٠ دقائق بناءً على السعر العالمي الرسمي.",
-        toggle: "EN"
-    }
-};
+  });
+  const data = await res.json();
+  return data.price;
+}
 
-let currentLang = 'en';
-let currentTheme = 'light';
+async function fetchUSDtoEGP() {
+  const res = await fetch("https://open.er-api.com/v6/latest/USD");
+  const data = await res.json();
+  return data?.rates?.EGP ?? 48.5;
+}
 
-const elements = {
-    p24: document.getElementById('p24'),
-    p21: document.getElementById('p21'),
-    p18: document.getElementById('p18'),
-    pCoin: document.getElementById('pCoin'),
-    ounceUSD: document.getElementById('ounceUSD'),
-    egpRate: document.getElementById('egpRate'),
-    timestamp: document.getElementById('timestamp'),
-    langToggle: document.getElementById('langToggle'),
-    themeToggle: document.getElementById('themeToggle'),
-    sunIcon: document.getElementById('sunIcon'),
-    moonIcon: document.getElementById('moonIcon'),
-    mainTitle: document.getElementById('mainTitle'),
-    updateText: document.getElementById('updateText'),
-    refreshBtn: document.getElementById('refreshBtn'),
-    footerText: document.getElementById('footerText')
-};
+// ================= CALCULATIONS =================
+function calcGram(ounceUSD, usdToEgp, purity) {
+  return (ounceUSD / GOLD_OUNCE_GRAMS) * usdToEgp * purity;
+}
 
+function applyMarket(price) {
+  return price * MARKET_ADJUSTMENT;
+}
+
+// ================= MAIN =================
 async function fetchGoldData() {
-    try {
-        setLoading(true);
-        const [goldRes, rateRes] = await Promise.all([
-            fetch('https://api.gold-api.com/price/XAU'),
-            fetch('https://open.er-api.com/v6/latest/USD')
-        ]);
+  try {
+    setLoading(true);
 
-        const goldData = await goldRes.json();
-        const rateData = await rateRes.json();
+    const [ounceUSD, egpRate] = await Promise.all([
+      fetchGoldOunceUSD(),
+      fetchUSDtoEGP(),
+    ]);
 
-        const ounceUSD = goldData.price || 2050.00;
-        const egpRate = rateData.rates.EGP || 48.50;
+    const gold24 = applyMarket(calcGram(ounceUSD, egpRate, 1));
+    const gold21 = applyMarket(calcGram(ounceUSD, egpRate, 0.875));
+    const gold18 = applyMarket(calcGram(ounceUSD, egpRate, 0.75));
+    const coin = gold21 * 8;
 
-        const marketPremium = 1.025; 
-        const pricePerGram24k = (ounceUSD / GOLD_OUNCE_GRAMS) * egpRate * marketPremium;
-        
-        updateUI({
-            k24: Math.round(pricePerGram24k),
-            k21: Math.round(pricePerGram24k * (21 / 24)),
-            k18: Math.round(pricePerGram24k * (18 / 24)),
-            coin: Math.round(pricePerGram24k * (21 / 24) * 8),
-            ounceUSD,
-            egpRate,
-            timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-        });
-    } catch (err) {
-        console.error('Fetch error:', err);
-    } finally {
-        setLoading(false);
-    }
-}
-
-function updateUI(data) {
-    elements.p24.innerText = data.k24.toLocaleString();
-    elements.p21.innerText = data.k21.toLocaleString();
-    elements.p18.innerText = data.k18.toLocaleString();
-    elements.pCoin.innerText = data.coin.toLocaleString();
-    elements.ounceUSD.innerText = `$${data.ounceUSD.toLocaleString()}`;
-    elements.egpRate.innerText = data.egpRate.toFixed(2);
-    elements.timestamp.innerText = data.timestamp;
-}
-
-function setLoading(isLoading) {
-    elements.refreshBtn.classList.toggle('animate-spin', isLoading);
-    elements.refreshBtn.style.opacity = isLoading ? '0.5' : '1';
-}
-
-function toggleTheme() {
-    currentTheme = currentTheme === 'light' ? 'dark' : 'light';
-    document.documentElement.classList.toggle('dark', currentTheme === 'dark');
-    elements.sunIcon.classList.toggle('hidden', currentTheme !== 'dark');
-    elements.moonIcon.classList.toggle('hidden', currentTheme === 'dark');
-    localStorage.setItem('gold_tracker_theme', currentTheme);
-}
-
-function toggleLanguage() {
-    currentLang = currentLang === 'en' ? 'ar' : 'en';
-    document.body.classList.toggle('rtl', currentLang === 'ar');
-    
-    const t = translations[currentLang];
-    elements.mainTitle.innerText = t.title;
-    elements.updateText.innerText = t.live;
-    elements.langToggle.innerText = t.toggle;
-    elements.footerText.innerText = t.footer;
-
-    const labels = {
-        '.label-24k': t.k24, '.label-21k': t.k21, '.label-18k': t.k18,
-        '.label-coin': t.coin, '.label-ounce': t.ounce, '.label-rate': t.rate
-    };
-
-    Object.entries(labels).forEach(([sel, text]) => {
-        const el = document.querySelector(sel);
-        if (el) el.innerText = text;
+    updateUI({
+      k24: Math.round(gold24),
+      k21: Math.round(gold21),
+      k18: Math.round(gold18),
+      coin: Math.round(coin),
+      ounceUSD,
+      egpRate,
+      timestamp: new Date().toLocaleTimeString([], {
+        hour: "2-digit",
+        minute: "2-digit",
+      }),
     });
-    
-    document.querySelectorAll('.unit-text').forEach(el => el.innerText = t.unit);
-    document.querySelectorAll('.unit-currency').forEach(el => el.innerText = t.currency);
-
-    localStorage.setItem('gold_tracker_lang', currentLang);
+  } catch (err) {
+    console.error("Gold fetch error:", err);
+  } finally {
+    setLoading(false);
+  }
 }
 
-// Simplified Init
-const savedTheme = localStorage.getItem('gold_tracker_theme');
-if (savedTheme === 'dark') toggleTheme();
+// ================= UI =================
+function updateUI(data) {
+  el.p24.textContent = data.k24.toLocaleString();
+  el.p21.textContent = data.k21.toLocaleString();
+  el.p18.textContent = data.k18.toLocaleString();
+  el.pCoin.textContent = data.coin.toLocaleString();
+  el.ounceUSD.textContent = `$${data.ounceUSD.toLocaleString()}`;
+  el.egpRate.textContent = data.egpRate.toFixed(2);
+  el.timestamp.textContent = data.timestamp;
+}
 
-const savedLang = localStorage.getItem('gold_tracker_lang');
-if (savedLang && savedLang !== currentLang) toggleLanguage();
+function setLoading(state) {
+  el.refreshBtn.classList.toggle("animate-spin", state);
+  el.refreshBtn.style.opacity = state ? "0.5" : "1";
+}
 
-elements.langToggle.addEventListener('click', toggleLanguage);
-elements.themeToggle.addEventListener('click', toggleTheme);
-elements.refreshBtn.addEventListener('click', fetchGoldData);
+// ================= THEME =================
+function toggleTheme() {
+  currentTheme = currentTheme === "light" ? "dark" : "light";
+  document.documentElement.classList.toggle("dark", currentTheme === "dark");
+  el.sunIcon.classList.toggle("hidden", currentTheme !== "dark");
+  el.moonIcon.classList.toggle("hidden", currentTheme === "dark");
+  localStorage.setItem("gold_theme", currentTheme);
+}
+
+// ================= LANGUAGE =================
+function toggleLanguage() {
+  currentLang = currentLang === "en" ? "ar" : "en";
+  document.body.classList.toggle("rtl", currentLang === "ar");
+
+  const t = translations[currentLang];
+  el.mainTitle.textContent = t.title;
+  el.updateText.textContent = t.live;
+  el.langToggle.textContent = t.toggle;
+  el.footerText.textContent = t.footer;
+
+  document.querySelector(".label-24k").textContent = t.k24;
+  document.querySelector(".label-21k").textContent = t.k21;
+  document.querySelector(".label-18k").textContent = t.k18;
+  document.querySelector(".label-coin").textContent = t.coin;
+  document.querySelector(".label-ounce").textContent = t.ounce;
+  document.querySelector(".label-rate").textContent = t.rate;
+
+  document
+    .querySelectorAll(".unit-text")
+    .forEach((e) => (e.textContent = t.unit));
+  document
+    .querySelectorAll(".unit-currency")
+    .forEach((e) => (e.textContent = t.currency));
+
+  localStorage.setItem("gold_lang", currentLang);
+}
+
+// ================= INIT =================
+if (localStorage.getItem("gold_theme") === "dark") toggleTheme();
+if (localStorage.getItem("gold_lang") === "ar") toggleLanguage();
+
+el.langToggle.addEventListener("click", toggleLanguage);
+el.themeToggle.addEventListener("click", toggleTheme);
+el.refreshBtn.addEventListener("click", fetchGoldData);
 
 fetchGoldData();
 setInterval(fetchGoldData, REFRESH_INTERVAL);
