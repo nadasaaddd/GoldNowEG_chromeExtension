@@ -1,0 +1,16 @@
+{
+  "manifest_version": 3,
+  "name": "Egypt Gold Tracker Pro",
+  "version": "1.0.0",
+  "description": "Real-time gold prices in Egypt with Arabic support.",
+  "action": {
+    "default_popup": "index.html",
+    "default_width": 400,
+    "default_height": 550
+  },
+  "permissions": ["storage"],
+  "host_permissions": [
+    "https://api.gold-api.com/*",
+    "https://open.er-api.com/*"
+  ]
+}

@@ -1,0 +1,384 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Egypt Gold Tracker Pro</title>
+    <link rel="stylesheet" href="dist/output.css" />
+    <style>
+      @import url("https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Noto+Kufi+Arabic:wght@400;600;700;800&display=swap");
+
+      :root {
+        --card-bg: #ffffff;
+        --body-bg: #fdfcfb;
+        --text-main: #0f172a;
+        --text-muted: #64748b;
+        --border-color: #f1f5f9;
+        --gold-primary: #d4af37;
+        --gold-light: #f9e29d;
+        --gold-dark: #b8860b;
+      }
+
+      .dark {
+        --card-bg: #111827;
+        --body-bg: #020617;
+        --text-main: #f8fafc;
+        --text-muted: #94a3b8;
+        --border-color: #1f2937;
+      }
+
+      body {
+        width: 400px;
+        height: 550px;
+        margin: 0;
+        background-color: var(--body-bg);
+        color: var(--text-main);
+        font-family: "Plus Jakarta Sans", sans-serif;
+        transition:
+          background-color 0.4s cubic-bezier(0.4, 0, 0.2, 1),
+          color 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        overflow: hidden;
+      }
+
+      body.rtl {
+        font-family: "Noto Kufi Arabic", sans-serif;
+        direction: rtl;
+      }
+
+      .luxury-card {
+        background-color: var(--card-bg);
+        border: 1px solid var(--border-color);
+        border-radius: 1.25rem;
+        transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        position: relative;
+        overflow: hidden;
+      }
+
+      .luxury-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 12px 20px -5px rgba(212, 175, 55, 0.2);
+        border-color: var(--gold-primary);
+      }
+
+      .gold-gradient-shine {
+        background: linear-gradient(
+          135deg,
+          #f9e29d 0%,
+          #d4af37 45%,
+          #b8860b 100%
+        );
+        box-shadow: 0 4px 15px -3px rgba(212, 175, 55, 0.4);
+      }
+
+      .gold-text-gradient {
+        background: linear-gradient(
+          135deg,
+          #f9e29d 0%,
+          #d4af37 50%,
+          #b8860b 100%
+        );
+        -webkit-background-clip: text;
+        background-clip: text;
+        -webkit-text-fill-color: transparent;
+        color: #d4af37;
+        font-weight: 800;
+      }
+
+      .pulse-live {
+        width: 8px;
+        height: 8px;
+        background-color: #10b981;
+        border-radius: 50%;
+        position: relative;
+      }
+
+      .pulse-live::after {
+        content: "";
+        position: absolute;
+        inset: -4px;
+        border-radius: 50%;
+        border: 2px solid #10b981;
+        animation: pulse-ring 2s infinite;
+      }
+
+      @keyframes pulse-ring {
+        0% {
+          transform: scale(0.5);
+          opacity: 1;
+        }
+        100% {
+          transform: scale(2);
+          opacity: 0;
+        }
+      }
+
+      .header-gradient {
+        background: linear-gradient(to right, #020617, #0f172a);
+        border-bottom: 2px solid var(--gold-primary);
+      }
+
+      .no-scrollbar::-webkit-scrollbar {
+        display: none;
+      }
+
+      .theme-transition {
+        transition:
+          background-color 0.4s ease,
+          border-color 0.4s ease,
+          color 0.4s ease;
+      }
+
+      .title-shadow {
+        filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
+      }
+      .dark .title-shadow {
+        filter: drop-shadow(0 2px 8px rgba(212, 175, 55, 0.3));
+      }
+
+      .dark .price-value {
+        color: #ffffff;
+        text-shadow: 0 0 12px rgba(212, 175, 55, 0.25);
+      }
+    </style>
+  </head>
+  <body class="bg-slate-50 theme-transition">
+    <div id="app" class="flex flex-col h-full">
+      <div
+        class="header-gradient px-4 py-4 flex justify-between items-center shadow-xl relative z-20"
+      >
+        <div class="flex items-center gap-3">
+          <div class="pulse-live"></div>
+          <div class="flex flex-col">
+            <span
+              id="updateText"
+              class="text-[10px] font-black text-emerald-400 uppercase tracking-widest leading-none mb-1"
+              >Live Market</span
+            >
+            <span
+              id="timestamp"
+              class="text-sm font-bold text-white leading-none"
+              >--:--</span
+            >
+          </div>
+        </div>
+        <div class="flex gap-2">
+          <button
+            id="themeToggle"
+            class="p-2 bg-white/5 hover:bg-white/10 rounded-xl text-white transition-all active:scale-95 border border-white/10"
+          >
+            <svg
+              id="moonIcon"
+              class="w-4 h-4"
+              fill="currentColor"
+              viewBox="0 0 20 20"
+            >
+              <path
+                d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"
+              ></path>
+            </svg>
+            <svg
+              id="sunIcon"
+              class="w-4 h-4 hidden"
+              fill="currentColor"
+              viewBox="0 0 20 20"
+            >
+              <path
+                d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z"
+              ></path>
+            </svg>
+          </button>
+          <button
+            id="langToggle"
+            class="px-3 py-1 bg-[#d4af37] hover:bg-[#b8860b] rounded-xl text-black font-extrabold text-[11px] transition-all active:scale-95 shadow-lg shadow-yellow-500/20"
+          >
+            AR
+          </button>
+        </div>
+      </div>
+
+      <div
+        class="flex-1 overflow-y-auto px-4 py-5 space-y-4 no-scrollbar bg-[var(--body-bg)] smooth-scroll custom-scrollbar"
+      >
+        <div class="flex items-center justify-between px-1">
+          <div class="flex items-center gap-3">
+            <span class="text-3xl filter drop-shadow-md">🇪🇬</span>
+            <h1
+              id="mainTitle"
+              class="text-2xl font-black gold-text-gradient title-shadow theme-transition"
+            >
+              Egypt Gold Tracker
+            </h1>
+          </div>
+          <button
+            id="refreshBtn"
+            class="p-2 hover:bg-slate-200 dark:hover:bg-neutral-800 rounded-full transition-colors text-slate-400"
+          >
+            <svg
+              class="w-5 h-5"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+              />
+            </svg>
+          </button>
+        </div>
+
+        <div class="grid grid-cols-1 gap-4" id="priceGrid">
+          <div class="luxury-card p-4 flex items-center gap-4 theme-transition">
+            <div
+              class="w-14 h-14 flex items-center justify-center rounded-2xl gold-gradient-shine text-black text-2xl font-black"
+            >
+              24
+            </div>
+            <div class="flex-1">
+              <p
+                class="text-[10px] font-extrabold text-slate-400 uppercase tracking-[0.15em] label-24k"
+              >
+                24K Pure Gold
+              </p>
+              <div class="flex items-baseline gap-1 mt-1">
+                <span
+                  id="p24"
+                  class="text-2xl font-black price-value theme-transition"
+                  >---</span
+                >
+                <span
+                  class="text-[10px] font-bold opacity-40 unit-text theme-transition"
+                  >EGP / g</span
+                >
+              </div>
+            </div>
+          </div>
+
+          <div class="luxury-card p-4 flex items-center gap-4 theme-transition">
+            <div
+              class="w-14 h-14 flex items-center justify-center rounded-2xl gold-gradient-shine text-black text-2xl font-black"
+            >
+              21
+            </div>
+            <div class="flex-1">
+              <p
+                class="text-[10px] font-extrabold text-slate-400 uppercase tracking-[0.15em] label-21k"
+              >
+                21K Standard
+              </p>
+              <div class="flex items-baseline gap-1 mt-1">
+                <span
+                  id="p21"
+                  class="text-2xl font-black price-value theme-transition"
+                  >---</span
+                >
+                <span
+                  class="text-[10px] font-bold opacity-40 unit-text theme-transition"
+                  >EGP / g</span
+                >
+              </div>
+            </div>
+          </div>
+
+          <div class="luxury-card p-4 flex items-center gap-4 theme-transition">
+            <div
+              class="w-14 h-14 flex items-center justify-center rounded-2xl gold-gradient-shine text-black text-2xl font-black"
+            >
+              18
+            </div>
+            <div class="flex-1">
+              <p
+                class="text-[10px] font-extrabold text-slate-400 uppercase tracking-[0.15em] label-18k"
+              >
+                18K Jewelry
+              </p>
+              <div class="flex items-baseline gap-1 mt-1">
+                <span
+                  id="p18"
+                  class="text-2xl font-black price-value theme-transition"
+                  >---</span
+                >
+                <span
+                  class="text-[10px] font-bold opacity-40 unit-text theme-transition"
+                  >EGP / g</span
+                >
+              </div>
+            </div>
+          </div>
+
+          <div class="luxury-card p-4 flex items-center gap-4 theme-transition">
+            <div
+              class="w-14 h-14 flex items-center justify-center rounded-2xl gold-gradient-shine text-black shadow-lg shadow-yellow-500/10"
+            >
+              <svg class="w-8 h-8" viewBox="0 0 24 24" fill="currentColor">
+                <path
+                  d="M12,2A10,10 0 0,1 22,12A10,10 0 0,1 12,22A10,10 0 0,1 2,12A10,10 0 0,1 12,2M12,4A8,8 0 0,0 4,12A8,8 0 0,0 12,20A8,8 0 0,0 20,12A8,8 0 0,0 12,4M11,17V16H9V14H13V13H9V11H11V10H13V11H15V13H11V14H15V16H13V17H11M11,10H9V8H11V7H13V8H15V10H11Z"
+                />
+              </svg>
+            </div>
+            <div class="flex-1">
+              <p
+                class="text-[10px] font-extrabold text-slate-400 uppercase tracking-[0.15em] label-coin"
+              >
+                Gold Coin (8g)
+              </p>
+              <div class="flex items-baseline gap-1 mt-1">
+                <span
+                  id="pCoin"
+                  class="text-2xl font-black price-value theme-transition"
+                  >---</span
+                >
+                <span
+                  class="text-[10px] font-bold opacity-40 unit-currency theme-transition"
+                  >EGP</span
+                >
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3 pt-2">
+          <div
+            class="luxury-card px-4 py-3 flex flex-col items-center theme-transition"
+          >
+            <span
+              class="text-[9px] font-black text-slate-400 uppercase tracking-widest label-ounce"
+              >Global Ounce</span
+            >
+            <span
+              id="ounceUSD"
+              class="text-sm font-black gold-text-gradient mt-0.5"
+              >$---</span
+            >
+          </div>
+          <div
+            class="luxury-card px-4 py-3 flex flex-col items-center theme-transition"
+          >
+            <span
+              class="text-[9px] font-black text-slate-400 uppercase tracking-widest label-rate"
+              >USD/EGP Bank</span
+            >
+            <span
+              id="egpRate"
+              class="text-sm font-black text-slate-700 dark:text-slate-200 mt-0.5 theme-transition"
+              >--.--</span
+            >
+          </div>
+        </div>
+      </div>
+
+      <footer class="px-6 py-4 text-center">
+        <p
+          id="footerText"
+          class="text-[10px] font-semibold text-slate-400/70 leading-relaxed theme-transition"
+        >
+          Prices updated every 10 minutes based on official global parity.
+        </p>
+      </footer>
+    </div>
+
+    <script type="module" src="index.js"></script>
+  </body>
+</html>
