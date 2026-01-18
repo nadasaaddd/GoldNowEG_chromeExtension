@@ -135,17 +135,11 @@ npm run watch
 
 ---
 
-## 📄 License
-
-MIT License
-
----
-
 ## 👩‍💻 Author
 
 **Nada Saad**
-Front-End Developer
-🔗 LinkedIn: _(add your profile link)_
+Front-End Developer/ Software Tester
+🔗 LinkedIn: _( www.linkedin.com/in/nada-saad-dd )_
 
 ---
 
